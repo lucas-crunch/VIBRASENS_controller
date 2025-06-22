@@ -245,7 +245,7 @@ void loop() {
         esp_deep_sleep_start();
     }
 
-    delay(20);
+    delay(30);
 /*
     if (M5.BtnPWR.isHolding()) {
 
