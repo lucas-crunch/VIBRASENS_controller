@@ -20,7 +20,9 @@ ClosedCube::Wired::TCA9548A tca9548a;
 #define CHANNEL_CHOICE 1
 int state = IDLE;
 
-long timer_holding = 0;
+unsigned long timer_holding = 0;
+bool start_holding = false;
+int time_screen = 2;
 
 Preferences preferences;
 
@@ -40,8 +42,8 @@ uint8_t last_btn_status_2 = 0;
 
 bool change = false;
 
-long timerScreenSleep = 0;
-long intervalScreenSleep = 10000; // 5 seconds
+unsigned long timerScreenSleep = 0;
+unsigned long intervalScreenSleep = 10000; // 5 seconds
 
 void initScreen() {
     M5.Display.setRotation(0);
@@ -90,7 +92,6 @@ void setup() {
     channel_number = preferences.getInt("channel", 6);
 
 
-
     initScreen();
     screenBackground();
     upgradeScreen();
@@ -114,11 +115,11 @@ void loop() {
 
     switch (state) {
         case IDLE:
-            tca9548a.selectChannel(2);
+            tca9548a.selectChannel(3);
             encoder_value_1 = scroll.getIncEncoderValue();
             btn_status_1 = scroll.getButtonStatus();
 
-            tca9548a.selectChannel(3);
+            tca9548a.selectChannel(2);
             encoder_value_2 = scroll.getIncEncoderValue();
             btn_status_2 = scroll.getButtonStatus();
 
@@ -246,12 +247,36 @@ void loop() {
     }
 
     delay(30);
-/*
+
     if (M5.BtnPWR.isHolding()) {
+        timerScreenSleep = millis();
+        if (start_holding == false) {
+            M5.Display.fillRect(0, 60, 135, 60, RED); // Efface la zone d'affichage
+            M5.Display.setTextColor(BLACK);
+            M5.Display.setTextDatum(CC_DATUM);
+            M5.Display.setFont(&Orbitron_Light_24);
+            //M5.Display.drawString(String(time_screen), 135 / 2, 90);
+            M5.Display.drawString("Power Off :", 135 / 2, 70);
+            M5.Display.drawString(String(time_screen)+"s", 135 / 2, 90);
+            start_holding = true;
+            timer_holding = millis();
+        }
+        if (millis() - timer_holding > 1000) {
+            time_screen--;
+            timer_holding = millis();
+            M5.Display.fillRect(0, 60, 135, 60, RED); // Efface la zone d'affichage
+            M5.Display.drawString("Power Off :", 135 / 2, 70);
+            M5.Display.drawString(String(time_screen)+"s", 135 / 2, 90);
+            //M5.Display.drawString(String(time_screen), 135 / 2, 90);
 
+        }
     }
-    */
-
-
+    if (M5.BtnPWR.wasReleasedAfterHold()) {
+        timer_holding = 0;
+        time_screen = 2;
+        M5.Display.clear(LIGHTGREY);
+        screenBackground();
+        upgradeScreen();
+    }
     // write your code here
 }
